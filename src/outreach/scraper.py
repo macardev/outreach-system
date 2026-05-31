@@ -401,16 +401,7 @@ def _extract_emails_from_text(text: str) -> list[str]:
 
 
 def _try_domain_emails(website: str, prefixes: list[str]) -> list[str]:
-    from urllib.parse import urlparse
-
-    parsed = urlparse(website)
-    domain = parsed.netloc or parsed.path
-    domain = domain.replace("www.", "")
-    results = []
-    for prefix in prefixes:
-        email = f"{prefix}@{domain}"
-        results.append(email)
-    return results
+    return []
 
 
 def _check_pagespeed_score(url: str) -> str:

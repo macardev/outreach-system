@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any
 
+import dns.resolver
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -72,6 +73,17 @@ def setup_gmail_service(credentials_path: str | None = None) -> Any:
     return _gmail_service
 
 
+def check_mx_record(email: str) -> bool:
+    domain = email.split("@")[1] if "@" in email else email
+    try:
+        answers = dns.resolver.resolve(domain, "MX")
+        return len(answers) > 0
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer,
+            dns.resolver.LifetimeTimeout, dns.exception.Timeout):
+        logger.debug("No MX record for domain %s", domain)
+        return False
+
+
 def send_email(
     to_email: str,
     subject: str,
@@ -79,6 +91,10 @@ def send_email(
     business_id: str | None = None,
     email_type: str = "outreach",
 ) -> dict[str, Any]:
+    if not check_mx_record(to_email):
+        logger.warning("Skipping %s: domain has no MX record", to_email)
+        return {"message_id": None, "sent_at": None, "status": "invalid_domain"}
+
     if not _is_allowed_time():
         logger.info("Outside send hours. Queueing email to %s", to_email)
         return {"message_id": None, "sent_at": None, "status": "queued_time"}
