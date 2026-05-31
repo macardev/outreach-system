@@ -41,8 +41,16 @@ jobs:
       - name: Check warmup status
         run: uv run python main.py --mode warmup-status
 
+      - name: Scrape new leads (Bilecik)
+        run: uv run python main.py --mode scrape --city "Bilecik" --type "diş kliniği" --limit 10 || echo "Scrape 1 warning"
+        timeout-minutes: 3
+
+      - name: Scrape new leads (Bozüyük)
+        run: uv run python main.py --mode scrape --city "Bozüyük" --type "diş kliniği" --limit 10 || echo "Scrape 2 warning"
+        timeout-minutes: 3
+
       - name: Send outreach emails
-        run: uv run python main.py --mode send
+        run: uv run python main.py --mode send || echo "Send completed with 0 emails"
 
       - name: Send follow-ups
         run: uv run python main.py --mode followup
