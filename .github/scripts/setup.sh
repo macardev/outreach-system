@@ -12,28 +12,21 @@ WARMUP_START_DATE="${WARMUP_START_DATE}"
 EOF
 
 echo "=== Setting up credentials.json ==="
-python3 -c "
-import sys
-with open('credentials.json', 'w') as f:
-    f.write(sys.stdin.read())
-" <<< "${CREDENTIALS_JSON}"
+cat > credentials.json << 'CREDEOF'
+$CREDENTIALS_JSON
+CREDEOF
 
 echo "=== Setting up token.json ==="
-python3 -c "
-import sys
-with open('token.json', 'w') as f:
-    f.write(sys.stdin.read())
-" <<< "${GMAIL_TOKEN_JSON}"
+cat > token.json << 'TOKENEOF'
+$GMAIL_TOKEN_JSON
+TOKENEOF
 
 echo "=== Setting up sheets_token.json ==="
-python3 -c "
-import sys
-with open('sheets_token.json', 'w') as f:
-    f.write(sys.stdin.read())
-" <<< "${SHEETS_TOKEN_JSON}"
+cat > sheets_token.json << 'SHEETSEOF'
+$SHEETS_TOKEN_JSON
+SHEETSEOF
 
 echo "=== Setup complete ==="
 ls -la .env credentials.json token.json sheets_token.json
-echo "=== credentials.json first 50 chars ==="
-head -c 50 credentials.json
-echo ""
+echo "=== File sizes (should be 300+) ==="
+wc -c credentials.json token.json sheets_token.json

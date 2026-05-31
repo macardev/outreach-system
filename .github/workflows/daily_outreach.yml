@@ -26,7 +26,7 @@ jobs:
         run: uv sync --frozen
 
       - name: Setup credentials from secrets
-        run: bash .github/scripts/setup.sh
+        run: python3 .github/scripts/setup.py
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
