@@ -1,14 +1,19 @@
-"""Setup credentials from environment variables for GitHub Actions."""
-import os, json
+"""Setup credentials from base64-encoded environment variables."""
+import os, base64
 
-def write_file(path: str, env_var: str) -> None:
-    value = os.environ.get(env_var, "")
-    if not value:
+def write_file_from_b64(path: str, env_var: str) -> None:
+    encoded = os.environ.get(env_var, "")
+    if not encoded:
         print(f"WARNING: {env_var} is empty!")
-    with open(path, "w") as f:
-        f.write(value)
-    size = os.path.getsize(path)
-    print(f"Written {path} ({size} bytes)")
+        return
+    try:
+        decoded = base64.b64decode(encoded).decode("utf-8")
+        with open(path, "w") as f:
+            f.write(decoded)
+        size = os.path.getsize(path)
+        print(f"Written {path} ({size} bytes)")
+    except Exception as e:
+        print(f"ERROR decoding {env_var}: {e}")
 
 print("=== Setting up .env ===")
 with open(".env", "w") as f:
@@ -19,13 +24,9 @@ with open(".env", "w") as f:
     f.write(f'SENDER_EMAIL="{os.environ.get("SENDER_EMAIL", "")}"\n')
     f.write(f'WARMUP_START_DATE="{os.environ.get("WARMUP_START_DATE", "")}"\n')
 
-print("=== Setting up credentials.json ===")
-write_file("credentials.json", "CREDENTIALS_JSON")
-
-print("=== Setting up token.json ===")
-write_file("token.json", "GMAIL_TOKEN_JSON")
-
-print("=== Setting up sheets_token.json ===")
-write_file("sheets_token.json", "SHEETS_TOKEN_JSON")
+print("=== Setting up JSON files from base64 ===")
+write_file_from_b64("credentials.json", "CREDENTIALS_JSON")
+write_file_from_b64("token.json", "GMAIL_TOKEN_JSON")
+write_file_from_b64("sheets_token.json", "SHEETS_TOKEN_JSON")
 
 print("=== Setup complete ===")
