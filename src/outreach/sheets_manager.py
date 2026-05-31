@@ -741,6 +741,69 @@ def _load_local_queue() -> list[dict[str, Any]]:
     return [b["data"] for b in backup if b.get("action") == "queue"]
 
 
+def get_unsent_businesses(min_score: int = 60) -> list[dict[str, Any]]:
+    """Get businesses from İşletmeler sheet that haven't been contacted yet."""
+    try:
+        sent_ids = set(get_all_contacted_place_ids())
+        service = setup_sheets_service()
+        if not service or not settings.SPREADSHEET_ID:
+            return []
+
+        result = (
+            service.spreadsheets()
+            .values()
+            .get(
+                spreadsheetId=settings.SPREADSHEET_ID,
+                range="İşletmeler!A:O",
+            )
+            .execute()
+        )
+        rows = result.get("values", [])
+        if len(rows) <= 1:
+            return []
+
+        headers = ["place_id", "name", "type", "city", "address", "phone", "email",
+                    "website", "website_quality", "priority_score", "maps_url",
+                    "rating", "review_count", "found_at", "status"]
+
+        unsent = []
+        for row in rows[1:]:
+            if len(row) < 15:
+                continue
+            pid = row[0]
+            if pid in sent_ids:
+                continue
+            email = row[6].strip() if len(row) > 6 and row[6] else ""
+            if not email or "@" not in email:
+                continue
+            try:
+                rating = float(row[11].replace(",", ".")) if row[11] else 0
+            except ValueError:
+                rating = 0
+            try:
+                reviews = int(row[12]) if row[12] else 0
+            except ValueError:
+                reviews = 0
+            try:
+                score = int(row[9]) if row[9] else 0
+            except ValueError:
+                score = 0
+
+            business = dict(zip(headers, row[:15]))
+            business["rating"] = rating
+            business["review_count"] = reviews
+            business["priority_score"] = score
+            business["email"] = email
+            unsent.append(business)
+
+        unsent.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+        logger.info(f"Found {len(unsent)} unsent businesses with emails from Sheet")
+        return unsent
+    except Exception as e:
+        logger.warning(f"Could not get unsent businesses: {e}")
+        return []
+
+
 def sync_local_backup() -> None:
     backup = _load_local_backup()
     if not backup:

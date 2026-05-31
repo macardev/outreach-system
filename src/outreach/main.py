@@ -270,6 +270,12 @@ def cmd_send(min_score: int = 60) -> None:
 
     if not businesses:
         try:
+            businesses = sheets_manager.get_unsent_businesses()
+        except Exception:
+            pass
+
+    if not businesses:
+        try:
             from src.outreach.scraper import search_businesses, filter_and_rank
 
             for city in settings.TARGET_CITIES[:2]:
