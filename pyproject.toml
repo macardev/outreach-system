@@ -1,0 +1,23 @@
+[project]
+name = "outreach-system"
+version = "0.1.0"
+description = "B2B Email Outreach Automation System for Turkish small businesses"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "google-api-python-client>=2.197.0",
+    "google-auth-oauthlib>=1.4.0",
+    "google-genai>=2.7.0",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
+    "python-dotenv>=1.2.2",
+    "requests>=2.34.2",
+    "rich>=15.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.409",
+    "ruff>=0.15.15",
+]

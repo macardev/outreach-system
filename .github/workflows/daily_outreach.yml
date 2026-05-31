@@ -1,0 +1,58 @@
+name: Daily Outreach
+
+on:
+  schedule:
+    - cron: '0 6 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  outreach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Setup credentials from secrets
+        run: .github/scripts/setup.sh
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          SENDER_NAME: ${{ secrets.SENDER_NAME }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          CREDENTIALS_JSON: ${{ secrets.CREDENTIALS_JSON }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          SHEETS_TOKEN_JSON: ${{ secrets.SHEETS_TOKEN_JSON }}
+          WARMUP_START_DATE: ${{ secrets.WARMUP_START_DATE }}
+
+      - name: Check warmup status
+        run: uv run python main.py --mode warmup-status
+
+      - name: Send outreach emails
+        run: uv run python main.py --mode send
+
+      - name: Send follow-ups
+        run: uv run python main.py --mode followup
+
+      - name: Update dashboard
+        run: uv run python main.py --mode report
+
+      - name: Email log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outreach-log
+          path: outreach.log
